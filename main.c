@@ -4,7 +4,7 @@
 #include "draw.h"
 
 static GtkWidget *txtInput;
-static GtkWindow *window;
+static GtkWidget *window;
 static GtkWidget *drawArea;
 GtkWidget *chkSaveSpace;
 static GtkWidget *slider;
@@ -21,7 +21,7 @@ TreePtr expressions[666];
 void show_messagebox_error(const gchar* message)
 {
     GtkDialogFlags flags = GTK_DIALOG_DESTROY_WITH_PARENT;
-    GtkWidget* dialog = gtk_message_dialog_new (window,
+    GtkWidget* dialog = gtk_message_dialog_new (GTK_WINDOW(window),
                                          flags,
                                          GTK_MESSAGE_ERROR,
                                          GTK_BUTTONS_CLOSE,
@@ -32,7 +32,7 @@ void show_messagebox_error(const gchar* message)
 
 static void btnCompute(GtkWidget *widget, gpointer data)
 {
-    char* myText = gtk_entry_get_text(GTK_ENTRY(txtInput));
+    const char* myText = gtk_entry_get_text(GTK_ENTRY(txtInput));
 
     char clear_expression[MAX_EXPRESSION_LENGTH];
     clear_expression_from_spaces(myText, clear_expression);
@@ -110,8 +110,8 @@ static void do_drawing(cairo_t* cr)
     for (int i = 0; i < expression_count; i++)
     {
         startY += expressions[i]->box.height;
-        calculate_boxes(cr, expressions[i], 1);
-        draw_expression(cr, expressions[i], 1, startX, startY);
+        calculate_boxes(cr, expressions[i], 1, true);
+        draw_expression(cr, expressions[i], 1, startX, startY, true);
 
         startY += expressions[i]->box.negative_height + defaultDelimeter;
     }
@@ -126,7 +126,7 @@ void chkSaveSpace_clicked()
 
 void slider_value_changed()
 {
-    FontSize = gtk_range_get_value(slider);
+    FontSize = gtk_range_get_value(GTK_RANGE(slider));
     LineWidth = FontSize / 50.0;
     gtk_widget_queue_draw(drawArea);
 }
@@ -159,7 +159,7 @@ void setup_ui(int argc, char *argv[])
 
     GtkWidget* lblFontSize = gtk_label_new("Font size: ");
     slider = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 32, 400, 1);
-    gtk_range_set_value(GTK_SCALE(slider), FONT_SIZE_DEFAULT);
+    gtk_range_set_value(GTK_RANGE(slider), FONT_SIZE_DEFAULT);
     gtk_scale_set_value_pos(GTK_SCALE(slider), GTK_POS_LEFT);
     g_signal_connect(G_OBJECT(slider), "value_changed", G_CALLBACK(slider_value_changed), NULL);
 
@@ -187,11 +187,11 @@ void setup_ui(int argc, char *argv[])
     GtkWidget* label = gtk_label_new("Copyright (C) Jakub Kuczkowiak 2017");
     gtk_box_pack_start(GTK_BOX(v_box), label, false, true, 0);
 
-    gtk_container_add(GTK_WINDOW(window), v_box);
+    gtk_container_add(GTK_CONTAINER(window), v_box);
 
     gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(swindow), drawArea);
 
-    gtk_widget_show_all(GTK_WINDOW(window));
+    gtk_widget_show_all(window);
     gtk_main();
 }
 

@@ -22,5 +22,5 @@ double size_difference(cairo_t* cr, double scale);
 double small_letter_size(cairo_t* cr, double scale);
 double big_letter_size(cairo_t* cr, double scale);
 
-void calculate_boxes(cairo_t* cr, TreePtr partialTree, double scale);
-void draw_expression(cairo_t* cr, TreePtr partialTree, double scale, double startX, double startY);
+void calculate_boxes(cairo_t* cr, TreePtr partialTree, double scale, bool bNewSubexpression);
+void draw_expression(cairo_t* cr, TreePtr partialTree, double scale, double startX, double startY, bool bNewSubexpression);

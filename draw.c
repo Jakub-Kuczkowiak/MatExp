@@ -9,7 +9,7 @@ const double POWER_PERCENTAGE = 0.5; // Power and Index scale.
 
 bool contains_expanding_letter(char* text)
 {
-    for (int i = 0; text[i] != NULL; i++)
+    for (int i = 0; text[i] != '\0'; i++)
         for (int j = 0; j < EXPANDING_LETTERS_NUMBER; j++)
             if (text[i] == EXPANDING_LETTERS[j])
                 return true;
@@ -19,7 +19,7 @@ bool contains_expanding_letter(char* text)
 
 bool contains_high_letter_or_number(char* text)
 {
-    for (int i = 0; text[i] != NULL; i++)
+    for (int i = 0; text[i] != '\0'; i++)
         if ((text[i] >= 'A' && text[i] <= 'Z') || (text[i] >= '0' && text[i] <= '9'))
             return true;
         else
@@ -66,7 +66,7 @@ double big_letter_size(cairo_t* cr, double scale)
     return extents.height;
 }
 
-//"Twierdzenie 1: Minus unarny mo¿e byæ tylko i wy³¹cznie na pocz¹tku wyra¿eñ:
+//"Twierdzenie 1: Minus unarny moÂ¿e byÃ¦ tylko i wyÂ³Â¹cznie na poczÂ¹tku wyraÂ¿eÃ±:
 // (1) "+" z lewej zawsze bez, z prawej zawsze z
 // (2) "-" z lewej zawsze bez, z prawej zawsze z
 // (3) "*" z lewej zawsze bez, z prawej zawsze z
@@ -75,7 +75,7 @@ double big_letter_size(cairo_t* cr, double scale)
 // (6) "indeks", z lewej zawsze z, z prawej zawsze bez
 
 // The following function calculates the size of each expression.
-void calculate_boxes(cairo_t* cr, TreePtr partialTree, double scale)
+void calculate_boxes(cairo_t* cr, TreePtr partialTree, double scale, bool bNewSubexpression)
 {
     cairo_set_font_size(cr, FontSize * scale);
 
@@ -91,7 +91,7 @@ void calculate_boxes(cairo_t* cr, TreePtr partialTree, double scale)
         if (contains_high_letter_or_number(partialTree->variable))
             partialTree->box.height = big_letter_size(cr, scale);
         else
-            partialTree->box.height = gtk_toggle_button_get_active(chkSaveSpace) ? small_letter_size(cr, scale) : big_letter_size(cr, scale); // meaning x/y is drawn differently.
+            partialTree->box.height = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(chkSaveSpace)) ? small_letter_size(cr, scale) : big_letter_size(cr, scale); // meaning x/y is drawn differently.
 
         if (contains_expanding_letter(partialTree->variable))
             partialTree->box.negative_height = size_difference(cr, scale);
@@ -110,7 +110,7 @@ void calculate_boxes(cairo_t* cr, TreePtr partialTree, double scale)
         // Parenthise if and only if it's the operator and it's not division or power (-1/2 NOT: -(1/2))
         Operator opArg = GetOperator(partialTree->left->op.ch);
         bool bShouldPackInParenthesis = IsOperator(partialTree->left->op.ch) && opArg.ch != '/' && opArg.ch != '^';
-        calculate_boxes(cr, partialTree->left, scale);
+        calculate_boxes(cr, partialTree->left, scale, true); // True because it will be either variable (not important) or it will be taken in parenthesis, so new start.
 
         cairo_text_extents_t extents;
         cairo_text_extents(cr, "-", &extents);
@@ -134,18 +134,18 @@ void calculate_boxes(cairo_t* cr, TreePtr partialTree, double scale)
     {
         // Case: Plus, Minus, Multiplication
         // We also add the right parenthesis in case it's unary minus there!
-        bool leftParenthesis = is_left_parenthesis_needed(op, partialTree->left->op);
+        bool leftParenthesis = is_left_parenthesis_needed(op, partialTree->left->op) || (partialTree->left->op.ch == '$' && !bNewSubexpression);
         bool rightParenthesis = is_right_parenthesis_needed(op, partialTree->right->op) || partialTree->right->op.ch == '$';
 
-        calculate_boxes(cr, partialTree->left, scale);
-        calculate_boxes(cr, partialTree->right, scale);
+        calculate_boxes(cr, partialTree->left, scale, bNewSubexpression); // on the left side, we pass forward the mightbeFirst..
+        calculate_boxes(cr, partialTree->right, scale, rightParenthesis); // on the right we pass according to the subexp start or not.
 
         double width = 0;
 
         cairo_text_extents_t extents;
         if (op.ch == '*')
         {
-            cairo_text_extents(cr, " · ", &extents);
+            cairo_text_extents(cr, " Â· ", &extents);
         }
         else
         {
@@ -180,9 +180,9 @@ void calculate_boxes(cairo_t* cr, TreePtr partialTree, double scale)
     else if (op.ch == '/')
     {
         // Case: Division, obviously no parenthesis here.
-        calculate_boxes(cr, partialTree->left, scale * FRACTAL_PERCENTAGE);
+        calculate_boxes(cr, partialTree->left, scale * FRACTAL_PERCENTAGE, true); // Obviously numerator and denumerator create new subexpression!
         cairo_set_font_size(cr, FontSize * scale);
-        calculate_boxes(cr, partialTree->right, scale * FRACTAL_PERCENTAGE);
+        calculate_boxes(cr, partialTree->right, scale * FRACTAL_PERCENTAGE, true); // Obviously numerator and denumerator create new subexpression!
         cairo_set_font_size(cr, FontSize * scale);
 
         // Obviously, the width of fractal is the maximum of numerator and denumerator.
@@ -211,8 +211,8 @@ void calculate_boxes(cairo_t* cr, TreePtr partialTree, double scale)
             width += extents.x_advance;
         }
 
-        calculate_boxes(cr, partialTree->left, scale);
-        calculate_boxes(cr, partialTree->right, scale * POWER_PERCENTAGE);
+        calculate_boxes(cr, partialTree->left, scale, leftParenthesis); // depends on parenthesis
+        calculate_boxes(cr, partialTree->right, scale * POWER_PERCENTAGE, true); // but power is always new subexpression!
         cairo_set_font_size(cr, FontSize * scale);
 
         partialTree->box.width = partialTree->left->box.width + partialTree->right->box.width + width;
@@ -223,8 +223,8 @@ void calculate_boxes(cairo_t* cr, TreePtr partialTree, double scale)
     else if (op.ch == '_')
     {
         // Similar to power.
-        calculate_boxes(cr, partialTree->left, scale);
-        calculate_boxes(cr, partialTree->right, scale * POWER_PERCENTAGE);
+        calculate_boxes(cr, partialTree->left, scale, bNewSubexpression); // Pass along
+        calculate_boxes(cr, partialTree->right, scale * POWER_PERCENTAGE, true); // Always new!
         cairo_set_font_size(cr, FontSize * scale);
 
         partialTree->box.width = partialTree->left->box.width + partialTree->right->box.width;
@@ -239,7 +239,7 @@ void calculate_boxes(cairo_t* cr, TreePtr partialTree, double scale)
 // The following function places the expressions in the correct place using the calculated size by calculate_box(...)
 // This is important to notice that this function is MIRROR of calculate_box, which means that it must be complementary
 // when drawing and calculating positions.
-void draw_expression(cairo_t* cr, TreePtr partialTree, double scale, double startX, double startY)
+void draw_expression(cairo_t* cr, TreePtr partialTree, double scale, double startX, double startY, bool bNewSubexpression)
 {
     cairo_font_extents_t fe;
     cairo_font_extents(cr, &fe);
@@ -282,7 +282,7 @@ void draw_expression(cairo_t* cr, TreePtr partialTree, double scale, double star
             startX += extents.x_advance;
         }
 
-        draw_expression(cr, partialTree->left, scale, startX, startY);
+        draw_expression(cr, partialTree->left, scale, startX, startY, true); // True because it will be either variable (not important) or it will be taken in parenthesis, so new start.
         cairo_set_font_size(cr, FontSize * scale);
 
         startX += partialTree->left->box.width;
@@ -296,7 +296,7 @@ void draw_expression(cairo_t* cr, TreePtr partialTree, double scale, double star
     }
     else if (op.ch == '+' || op.ch == '-' || op.ch == '*')
     {
-        bool leftParenthesis = is_left_parenthesis_needed(op, partialTree->left->op);
+        bool leftParenthesis = is_left_parenthesis_needed(op, partialTree->left->op) || (partialTree->left->op.ch == '$' && !bNewSubexpression);
         bool rightParenthesis = is_right_parenthesis_needed(op, partialTree->right->op) || partialTree->right->op.ch == '$';
 
         cairo_text_extents_t extents;
@@ -311,7 +311,7 @@ void draw_expression(cairo_t* cr, TreePtr partialTree, double scale, double star
             startX += extents.x_advance;
         }
 
-        draw_expression(cr, partialTree->left, scale, startX, startY);
+        draw_expression(cr, partialTree->left, scale, startX, startY, bNewSubexpression); // on the left side, we pass forward the mightbeFirst...
         cairo_set_font_size(cr, FontSize * scale);
 
         startX += partialTree->left->box.width;
@@ -328,9 +328,9 @@ void draw_expression(cairo_t* cr, TreePtr partialTree, double scale, double star
         cairo_move_to(cr, startX, startY);
         if (op.ch == '*')
         {
-            cairo_text_extents(cr, " · ", &extents);
+            cairo_text_extents(cr, " Â· ", &extents);
             cairo_move_to(cr, startX, startY);
-            cairo_show_text(cr, " · ");
+            cairo_show_text(cr, " Â· ");
         }
         else
         {
@@ -353,7 +353,7 @@ void draw_expression(cairo_t* cr, TreePtr partialTree, double scale, double star
             startX += extents.x_advance;
         }
 
-        draw_expression(cr, partialTree->right, scale, startX, startY);
+        draw_expression(cr, partialTree->right, scale, startX, startY, rightParenthesis); // on the right we pass according to the subexp start or not.
         cairo_set_font_size(cr, FontSize * scale);
 
         startX += partialTree->right->box.width;
@@ -382,7 +382,7 @@ void draw_expression(cairo_t* cr, TreePtr partialTree, double scale, double star
         startY -= spacing;
         startY -= partialTree->left->box.negative_height;
 
-        draw_expression(cr, partialTree->left, scale * FRACTAL_PERCENTAGE, startX + centerNumerator, startY);
+        draw_expression(cr, partialTree->left, scale * FRACTAL_PERCENTAGE, startX + centerNumerator, startY, true); // True for both, because it's new subexpression (both numerator and denumerator)
         cairo_set_font_size(cr, FontSize * scale);
 
         startY += partialTree->left->box.negative_height;
@@ -401,7 +401,7 @@ void draw_expression(cairo_t* cr, TreePtr partialTree, double scale, double star
         startY -= partialTree->right->box.negative_height;
 
         // Then we finish by drawing denumerator.
-        draw_expression(cr, partialTree->right, scale * FRACTAL_PERCENTAGE, startX + centerDenumerator, startY);
+        draw_expression(cr, partialTree->right, scale * FRACTAL_PERCENTAGE, startX + centerDenumerator, startY, true);
     }
     else if (op.ch == '^')
     {
@@ -420,7 +420,7 @@ void draw_expression(cairo_t* cr, TreePtr partialTree, double scale, double star
             cairo_set_font_size(cr, FontSize * scale);
         }
 
-        draw_expression(cr, partialTree->left, scale, startX, startY);
+        draw_expression(cr, partialTree->left, scale, startX, startY, leftParenthesis); // depends on parenthesis
         cairo_set_font_size(cr, FontSize * scale);
 
         startX += partialTree->left->box.width;
@@ -438,18 +438,18 @@ void draw_expression(cairo_t* cr, TreePtr partialTree, double scale, double star
         startY -= partialTree->right->box.negative_height;
         startY += partialTree->left->box.height / 4.0;
 
-        draw_expression(cr, partialTree->right, scale * POWER_PERCENTAGE, startX, startY);
+        draw_expression(cr, partialTree->right, scale * POWER_PERCENTAGE, startX, startY, true); // Power is always new subexpression
     }
     else if (op.ch == '_')
     {
         // Very similar
-        draw_expression(cr, partialTree->left, scale, startX, startY);
+        draw_expression(cr, partialTree->left, scale, startX, startY, bNewSubexpression); // Pass along
 
         startX += partialTree->left->box.width;
 
         startY += partialTree->right->box.height;
         startY -= small_letter_size(cr, scale) / 4.0;
 
-        draw_expression(cr, partialTree->right, scale * POWER_PERCENTAGE, startX, startY);
+        draw_expression(cr, partialTree->right, scale * POWER_PERCENTAGE, startX, startY, true); // Always new subexpression
     }
 }
