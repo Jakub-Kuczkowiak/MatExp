@@ -3,8 +3,7 @@
 #include "tex.h"
 #include "tree.h"
 #include "stack.h"
-
-#define NULL 0
+#include <string.h>
 
 // The following structure contains the definition of operators that we allow to be used.
 // The empty operator is used to make the code more readable in some sections.
@@ -21,7 +20,7 @@ Operator Operators[OPERATORS_NUMBER] = {
                 };
 
 // Removes all the spaces.
-void clear_expression_from_spaces(char* expression, char* result)
+void clear_expression_from_spaces(const char* expression, char* result)
 {
     int len = strlen(expression);
     int j = 0;
@@ -66,7 +65,7 @@ void encode_unary_minuses(char* expression, char* result)
 
 bool IsOperator(char c)
 {
-    for (int i = 0; i < OPERATORS_NUMBER; i++)
+    for (int i = 1; i < OPERATORS_NUMBER; i++) // Here we don't want to check an empty operator zero.
         if (c == Operators[i].ch)
             return true;
 
@@ -239,7 +238,7 @@ bool change_to_RPN(char* expression, char* vector, gchar* error)
         position--;
     }
 
-    vector[--vector_iterator] = NULL;
+    vector[--vector_iterator] = '\0';
     for (int i = 0; i < vector_iterator; i++)
     {
         printf("%c", vector[i]);

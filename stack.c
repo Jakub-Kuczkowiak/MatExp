@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include "stack.h"
+#include <stdlib.h>
 
 struct stack
 {
@@ -14,6 +15,11 @@ struct stack
 void init(StackPtr *stck)
 {
     *stck = NULL;
+}
+
+bool isempty(StackPtr stck)
+{
+    return (stck == NULL);
 }
 
 bool push(StackPtr *stck, TYP_INFO info)

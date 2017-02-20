@@ -32,6 +32,6 @@ struct Operator GetOperator(char c);
 
 bool change_to_RPN(char* expression, char* result, gchar* error);
 
-void clear_expression_from_spaces(char* expression, char* result);
+void clear_expression_from_spaces(const char* expression, char* result);
 bool is_correct_input(char* expression);
 void encode_unary_minuses(char* expression, char* result);

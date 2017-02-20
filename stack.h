@@ -11,5 +11,6 @@
 
 typedef struct stack *StackPtr;
 void init(StackPtr *stck);
+bool isempty(StackPtr stck);
 bool push(StackPtr *stck, TYP_INFO info);
 TYP_INFO pop(StackPtr* stck);

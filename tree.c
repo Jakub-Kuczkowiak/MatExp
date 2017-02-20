@@ -3,8 +3,11 @@
 #include <stdio.h>
 #include "tree.h"
 #include "stack.h"
+#include <stdlib.h>
 
 #define MAX_VARIABLE_LENGTH 64
+
+extern Operator Operators[OPERATORS_NUMBER];
 
 TreePtr create_leaf(char* variable)
 {
@@ -15,10 +18,9 @@ TreePtr create_leaf(char* variable)
         exit(0);
     }
 
-    Operator op;
     leaf->left = NULL;
     leaf->right = NULL;
-    leaf->op = op;
+    leaf->op = Operators[0];
     leaf->variable = variable;
 
     return leaf;
@@ -45,7 +47,7 @@ bool create_tree(char* vector, TreePtr* korzen)
     StackPtr stack;
     init(&stack);
 
-    for (int i = 0; vector[i] != NULL; i++)
+    for (int i = 0; vector[i] != '\0'; i++)
     {
         if (vector[i] == ' ') continue;
 
@@ -75,7 +77,7 @@ bool create_tree(char* vector, TreePtr* korzen)
         {
             char* variable = malloc(sizeof(char) * MAX_VARIABLE_LENGTH);
             int j = 0;
-            while (vector[i] != NULL && vector[i] != ' ')
+            while (vector[i] != '\0' && vector[i] != ' ')
             {
                 variable[j] = vector[i];
                 i++; j++;
@@ -83,7 +85,7 @@ bool create_tree(char* vector, TreePtr* korzen)
 
             i--;
 
-            variable[j] = NULL;
+            variable[j] = '\0';
 
             TreePtr leaf = create_leaf(variable);
             push(&stack, leaf);
@@ -92,18 +94,21 @@ bool create_tree(char* vector, TreePtr* korzen)
 
     TreePtr Korzen = pop(&stack);
 
+    // We check if the stack is empty since there might still be some variables operators on the stack and it's incorrect then.
+    if (!isempty(stack)) return false;
+
     *korzen = Korzen;
     return true;
 }
 
 bool is_left_parenthesis_needed(Operator op, Operator left)
 {
-    return (left.precedence < op.precedence ||
+    return IsOperator(left.ch) && (left.precedence < op.precedence ||
             (left.precedence == op.precedence && op.associativity == right && op.przemiennosc_nawiasowa));
 }
 
 bool is_right_parenthesis_needed(Operator op, Operator right)
 {
-    return (right.precedence < op.precedence ||
+    return IsOperator(right.ch) && (right.precedence < op.precedence ||
             (right.precedence == op.precedence && op.associativity == left && op.przemiennosc_nawiasowa));
 }
