@@ -42,7 +42,7 @@ TreePtr create_node(TreePtr leftLeaf, TreePtr rightLeaf, Operator op)
     return node;
 }
 
-bool create_tree(char* vector, TreePtr* korzen)
+bool create_tree(const char* vector, TreePtr* korzen)
 {
     StackPtr stack;
     init(&stack);
@@ -101,13 +101,13 @@ bool create_tree(char* vector, TreePtr* korzen)
     return true;
 }
 
-bool is_left_parenthesis_needed(Operator op, Operator left)
+bool is_left_parenthesis_needed(const Operator op, const Operator left)
 {
     return IsOperator(left.ch) && (left.precedence < op.precedence ||
             (left.precedence == op.precedence && op.associativity == right && op.przemiennosc_nawiasowa));
 }
 
-bool is_right_parenthesis_needed(Operator op, Operator right)
+bool is_right_parenthesis_needed(const Operator op, const Operator right)
 {
     return IsOperator(right.ch) && (right.precedence < op.precedence ||
             (right.precedence == op.precedence && op.associativity == left && op.przemiennosc_nawiasowa));

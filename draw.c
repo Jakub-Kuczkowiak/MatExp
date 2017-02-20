@@ -7,7 +7,7 @@ const double FONT_ARITHMETIC_PLACER = 1.6; // Strictly related to font type to m
 const double FRACTAL_PERCENTAGE = 0.6; // Numerator and denumerator scale.
 const double POWER_PERCENTAGE = 0.5; // Power and Index scale.
 
-bool contains_expanding_letter(char* text)
+bool contains_expanding_letter(const char* text)
 {
     for (int i = 0; text[i] != '\0'; i++)
         for (int j = 0; j < EXPANDING_LETTERS_NUMBER; j++)
@@ -17,7 +17,7 @@ bool contains_expanding_letter(char* text)
     return false;
 }
 
-bool contains_high_letter_or_number(char* text)
+bool contains_high_letter_or_number(const char* text)
 {
     for (int i = 0; text[i] != '\0'; i++)
         if ((text[i] >= 'A' && text[i] <= 'Z') || (text[i] >= '0' && text[i] <= '9'))

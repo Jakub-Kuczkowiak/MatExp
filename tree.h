@@ -28,7 +28,7 @@ struct Node
 TreePtr create_leaf(char* variable);
 TreePtr create_node(TreePtr leftLeaf, TreePtr rightLeaf, Operator op);
 
-bool create_tree(char* vector, TreePtr* korzen);
+bool create_tree(const char* vector, TreePtr* korzen);
 
-bool is_left_parenthesis_needed(Operator op, Operator left);
-bool is_right_parenthesis_needed(Operator op, Operator right);
+bool is_left_parenthesis_needed(const Operator op, const Operator left);
+bool is_right_parenthesis_needed(const Operator op, const Operator right);

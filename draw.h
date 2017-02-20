@@ -15,8 +15,8 @@ extern GtkWidget *chkSaveSpace;
 extern double FontSize;
 extern double LineWidth;
 
-bool contains_expanding_letter(char* text);
-bool contains_high_letter_or_number(char* text);
+bool contains_expanding_letter(const char* text);
+bool contains_high_letter_or_number(const char* text);
 
 double size_difference(cairo_t* cr, double scale);
 double small_letter_size(cairo_t* cr, double scale);

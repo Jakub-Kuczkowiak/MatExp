@@ -32,7 +32,7 @@ void clear_expression_from_spaces(const char* expression, char* result)
 }
 
 // Checks if input contains allowed characters.
-bool is_correct_input(char* expression)
+bool is_correct_input(const char* expression)
 {
     int len = strlen(expression);
     for (int i = 0; i < len; i++)
@@ -48,7 +48,7 @@ bool is_correct_input(char* expression)
 }
 
 // Loop invariant: Unary minus might be first and only first character of each expression and subexpression. (starting from '(')
-void encode_unary_minuses(char* expression, char* result)
+void encode_unary_minuses(const char* expression, char* result)
 {
     result[0] = expression[0] == '-' ? '$' : expression[0];
 
@@ -85,7 +85,7 @@ struct Operator GetOperator(char c)
 
 // The following function is the heart of logic and changes the expression into Reverse Polish Notation.
 // It also finds errors with double '.' or mismatching parenthesis.
-bool change_to_RPN(char* expression, char* vector, gchar* error)
+bool change_to_RPN(const char* expression, char* vector, gchar* error)
 {
     StackPtr stack;
     init(&stack);
