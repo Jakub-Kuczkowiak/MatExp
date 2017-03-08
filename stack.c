@@ -25,7 +25,7 @@ bool isempty(StackPtr stck)
 bool push(StackPtr *stck, TYP_INFO info)
 {
     StackPtr p;
-    if ((p=(StackPtr)malloc(sizeof(struct stack))) == NULL)
+    if ((p = (StackPtr)malloc(sizeof(struct stack))) == NULL)
         return true;
     else
     {
